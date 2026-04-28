@@ -1,0 +1,62 @@
+# ============================================================
+# JARVIS - AI Voice Assistant | docker-compose.yml
+# One-Click Setup: docker compose up --build
+# ============================================================
+#
+# AUDIO NOTE (Windows):
+#   JARVIS uses the microphone (SpeechRecognition) and TTS
+#   (pyttsx3/espeak). Docker on Windows can't access audio
+#   devices natively. Two options:
+#
+#   Option A (recommended) - Run natively with Python:
+#     Use setup.bat -> start.bat instead of Docker for full
+#     microphone + TTS support on Windows.
+#
+#   Option B - Docker + PulseAudio (advanced):
+#     Install PulseAudio for Windows, expose it on TCP 4713
+#     and set PULSE_SERVER below accordingly.
+#
+# ============================================================
+
+services:
+  jarvis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jarvis_assistant
+    image: jarvis-ai:latest
+    restart: unless-stopped
+
+    # Load API keys from .env file (copy .env.example -> .env)
+    env_file:
+      - .env
+
+    environment:
+      - PYTHONUNBUFFERED=1
+      # PulseAudio audio passthrough (Option B)
+      # Uncomment and configure if using PulseAudio on Windows:
+      # - PULSE_SERVER=tcp:host.docker.internal:4713
+
+    # Interactive mode required for voice input
+    stdin_open: true
+    tty: true
+
+    # Allow host network access for web browser commands
+    # and PulseAudio TCP connection
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Volume: persist .env and music library
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./musiclibrary.py:/app/musiclibrary.py
+
+    # Uncomment for PulseAudio device passthrough (Linux/WSL2):
+    # devices:
+    #   - /dev/snd:/dev/snd
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
