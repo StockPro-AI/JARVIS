@@ -18,6 +18,8 @@ A Python-based AI voice assistant powered by **Google Gemini**, capable of web a
 - 📰 **Fetches latest news** via NewsAPI
 - 🤖 **AI responses** powered by Google Gemini
 - 🐳 **Docker ready** – One-Click setup with BAT scripts
+- - 🧠 **Memory System** – Response cache + Knowledge graph (saves API tokens)
+
 
 ---
 
@@ -32,6 +34,7 @@ A Python-based AI voice assistant powered by **Google Gemini**, capable of web a
 | News | NewsAPI (`requests`) |
 | Containerization | Docker + Docker Compose |
 | Config | python-dotenv |
+| Memory System | `memory.py` (cache + knowledge graph) |
 
 ---
 
@@ -128,15 +131,59 @@ JARVIS uses the **microphone** (SpeechRecognition) and **text-to-speech** (pytts
 ```
 JARVIS/
 ├── main.py              # Main application entry point
+├── memory.py            # Memory system (cache + knowledge graph)
 ├── musiclibrary.py      # Music library definitions
 ├── requirements.txt     # Python dependencies
 ├── Dockerfile           # Docker image definition
 ├── docker-compose.yml   # Docker Compose one-click setup
 ├── .env.example         # API key template
+├── CODEX_PROMPT.md      # System prompt for LLM/Codex developers
 ├── setup.bat            # Windows: first-time setup
 ├── start.bat            # Windows: start JARVIS
 └── stop.bat             # Windows: stop JARVIS
 ```
+
+## Memory System & Token Optimization
+
+JARVIS includes an intelligent memory system that reduces API costs and improves response times:
+
+### Response Cache
+- **SHA256-based query hashing** for exact & normalized matches
+- **Automatic caching** after first API call
+- **Hit tracking** to monitor cache efficiency
+- **100% token savings** on cache hits
+
+### Knowledge Graph
+- **Entity tracking** (people, places, concepts)
+- **Relationship mapping** (User → ASKS_ABOUT → Weather)
+- **Simple entity extraction** from conversations
+- **Persistent storage** in `knowledge_graph.json`
+
+### Conversation History
+- **Automatic context management** (last N turns)
+- **Context compression** for token-limited prompts
+- **`export_for_codex()`** method for LLM integration
+
+### Usage Example
+
+```python
+from memory import MemorySystem
+
+memory = MemorySystem()
+
+# Check cache before API call (saves tokens!)
+cached = memory.get_cached_response("what is the weather")
+if cached:
+    return cached  # 0 tokens used
+
+# Call API only if needed
+response = gemini_api(query)
+memory.cache_response(query, response)
+```
+
+See [`CODEX_PROMPT.md`](CODEX_PROMPT.md) for detailed integration guide.
+
+---
 
 ---
 
